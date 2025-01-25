@@ -36,7 +36,7 @@ class MyHomePage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => WebViewPage(url: 'https://www.lenienttree.com'),
+                builder: (context) => const WebViewPage(),
               ),
             );
           },

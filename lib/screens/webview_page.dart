@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewPage extends StatefulWidget {
-  final String url;
-
-  const WebViewPage({super.key, required this.url}); // Add const and key
+  const WebViewPage({super.key}); // No constructor parameter for URL
 
   @override
   WebViewPageState createState() => WebViewPageState();
@@ -17,6 +15,7 @@ class WebViewPageState extends State<WebViewPage> {
   @override
   void initState() {
     super.initState();
+    const String url = 'https://www.lenienttree.com';
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -30,14 +29,14 @@ class WebViewPageState extends State<WebViewPage> {
             setState(() {
               isLoading = false;
             });
+            _controller.setBackgroundColor(Colors.transparent);
           },
           onWebResourceError: (WebResourceError error) {
-            // Handle errors
             debugPrint("WebView Error: ${error.description}");
           },
         ),
       )
-      ..loadRequest(Uri.parse(widget.url));
+      ..loadRequest(Uri.parse(url)); // Use the declared URL
   }
 
   @override
@@ -49,9 +48,10 @@ class WebViewPageState extends State<WebViewPage> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller), // Use WebViewWidget
+          WebViewWidget(controller: _controller,),
+          // Load the WebView content
           if (isLoading)
-            const Center(child: CircularProgressIndicator()), // Show loading
+            const Center(child: CircularProgressIndicator()), // Show progress indicator
         ],
       ),
     );
