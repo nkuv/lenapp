@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../utils/webview_utils.dart'; // Import the utils file
 
 class WebViewPage extends StatefulWidget {
   const WebViewPage({super.key});
@@ -20,36 +21,37 @@ class WebViewPageState extends State<WebViewPage> {
     super.initState();
     _initializeWebView();
   }
+
   // Initialize WebViewController
   Future<void> _initializeWebView() async {
-    final controller = WebViewController();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            setState(() {
+              isLoading = true;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              isLoading = false;
+            });
 
-    // Set WebView options like disabling zoom
-    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    controller.setNavigationDelegate(
-      NavigationDelegate(
-        onPageStarted: (String url) async {
-          setState(() {
-            isLoading = true;
-          });
-        },
-        onPageFinished: (String url) async {
-          setState(() {
-            isLoading = false;
-          });
-          controller.setBackgroundColor(Colors.transparent);
-        },
-        onWebResourceError: (WebResourceError error) {
-          debugPrint("WebView Error: ${error.description}");
-        },
-      ),
-    );
-    // Load URL
-    await controller.loadRequest(Uri.parse(url));
-    // Set the WebView controller
-    setState(() {
-      _controller = controller;
-    });
+            // Call the function to inject JavaScript to disable zoom
+            injectDisableZoom(_controller);
+
+            // Set the background color
+            _controller.setBackgroundColor(Colors.transparent);
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint("WebView Error: ${error.description}");
+          },
+        ),
+      );
+
+    // Load the URL
+    await _controller.loadRequest(Uri.parse(url));
   }
 
   @override
@@ -58,9 +60,7 @@ class WebViewPageState extends State<WebViewPage> {
       body: SafeArea(  // Wrap the body in SafeArea
         child: Stack(
           children: [
-            WebViewWidget(
-              controller: _controller,
-            ),
+            WebViewWidget(controller: _controller), // Use WebViewWidget
             if (isLoading)
               const Center(child: CircularProgressIndicator()),
           ],
