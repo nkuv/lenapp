@@ -13,12 +13,20 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Lenient Tree',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      theme: ThemeData.light(), // Light theme (optional)
+      darkTheme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: Color(0xFF050817), // Black pearl background
+        appBarTheme: AppBarTheme(
+          color: Colors.black, // Deep black app bar
+        ),
+        // You can further customize other dark theme properties here
       ),
+
+      themeMode: ThemeMode.dark, // Set dark mode as default
       home: const MyHomePage(),
     );
   }
+
 }
 
 class MyHomePage extends StatelessWidget {
@@ -46,3 +54,4 @@ class MyHomePage extends StatelessWidget {
     );
   }
 }
+
