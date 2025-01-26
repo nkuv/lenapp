@@ -22,12 +22,12 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
     _initializeWebView();
 
     _controller = AnimationController(
-      duration: Duration(milliseconds: 1300), // 2 seconds for smoother acceleration
+      duration: Duration(milliseconds: 1000), // 2 seconds for smoother acceleration
       vsync: this,
     );
 
     // Non-instant fade-in start with delay
-    Future.delayed(Duration(milliseconds: 700), () {  // Delay before starting animation
+    Future.delayed(Duration(milliseconds: 900), () {  // Delay before starting animation
       _controller.forward();
     });
 
@@ -40,7 +40,7 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
     );
 
     // After the fade-in, stay at 100% opacity for 1 second, then navigate
-    Timer(Duration(milliseconds: 3200), () {
+    Timer(Duration(milliseconds: 2700), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const WebViewPage()),
