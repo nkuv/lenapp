@@ -22,7 +22,6 @@ class WebViewPageState extends State<WebViewPage> {
     _initializeWebView();
   }
 
-  // Initialize WebViewController
   Future<void> _initializeWebView() async {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -37,11 +36,7 @@ class WebViewPageState extends State<WebViewPage> {
             setState(() {
               isLoading = false;
             });
-
-            // Call the function to inject JavaScript to disable zoom
             injectDisableZoom(_controller);
-
-            // Set the background color
             _controller.setBackgroundColor(Colors.transparent);
           },
           onWebResourceError: (WebResourceError error) {
@@ -57,10 +52,10 @@ class WebViewPageState extends State<WebViewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(  // Wrap the body in SafeArea
+      body: SafeArea(
         child: Stack(
           children: [
-            WebViewWidget(controller: _controller), // Use WebViewWidget
+            WebViewWidget(controller: _controller),
             if (isLoading)
               const Center(child: CircularProgressIndicator()),
           ],
