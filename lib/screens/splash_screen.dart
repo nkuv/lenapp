@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:async';  // For Timer
-import 'package:google_fonts/google_fonts.dart';  // Import Google Fonts
-import 'package:webview_flutter/webview_flutter.dart';  // Import WebView
-import 'webview_page.dart';  // Import WebViewPage
+import 'dart:async';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'webview_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,39 +14,33 @@ class SplashScreen extends StatefulWidget {
 class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _scaleAnimation;
-  late WebViewController _webViewController;  // WebViewController to preload WebView
+  late WebViewController _webViewController;
 
   @override
   void initState() {
     super.initState();
     _initializeWebView();
+
     _controller = AnimationController(
-      duration: Duration(milliseconds: 2000),
+      duration: Duration(milliseconds: 1300), // 2 seconds for smoother acceleration
       vsync: this,
     );
 
-    // Fade-In Animation (Opacity)
+    // Non-instant fade-in start with delay
+    Future.delayed(Duration(milliseconds: 700), () {  // Delay before starting animation
+      _controller.forward();
+    });
+
+    // Accelerating Fade-In Animation (Opacity)
     _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn, // Accelerating curve
+      ),
     );
 
-    // Slide-In Animation (Movement)
-    _slideAnimation = Tween<Offset>(begin: Offset(0.0, 1.0), end: Offset(0.0, 0.0)).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
-    // Scale-In Animation (Zoom In)
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-
-    // Start the animation
-    _controller.forward();
-
-    // Navigate to WebViewPage after animation
-    Timer(Duration(milliseconds: 2000), () {
+    // After the fade-in, stay at 100% opacity for 1 second, then navigate
+    Timer(Duration(milliseconds: 3200), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const WebViewPage()),
@@ -56,24 +50,18 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
 
   // Preload WebView content in the background
   Future<void> _initializeWebView() async {
-    // Initialize WebViewController and load the URL
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (String url) {
-            // Optionally handle page loading
-          },
-          onPageFinished: (String url) {
-            // Handle when page finishes loading
-          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {},
           onWebResourceError: (WebResourceError error) {
             print("Error preloading WebView: ${error.description}");
           },
         ),
       );
 
-    // Load the URL in the background
     await _webViewController.loadRequest(Uri.parse('https://www.lenienttree.com'));
     print("WebView content preloaded.");
   }
@@ -87,23 +75,17 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050817),  // Set deep blackish background color
+      backgroundColor: const Color(0xFF050817),  // Deep blackish background
       body: Center(
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: FadeTransition(
-            opacity: _opacity,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: Text(
-                'Lenient Tree',  // Text for splash screen
-                style: GoogleFonts.pacifico(  // Use Google Font here
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 2.0,
-                ),
-              ),
+        child: FadeTransition(
+          opacity: _opacity,  // Accelerating fade-in effect
+          child: Text(
+            'Lenient Tree',  // Your splash screen text
+            style: GoogleFonts.lexendDeca(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,  // White color
+              letterSpacing: 2.0,
             ),
           ),
         ),

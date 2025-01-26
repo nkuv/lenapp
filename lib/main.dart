@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';  // For SystemChrome
 import 'screens/splash_screen.dart';  // Import the splash screen
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   _setNavigationBarColor();  // Set the navigation bar color when the app starts
   runApp(const MyApp());
 }
