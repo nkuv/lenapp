@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../utils/webview_utils.dart';
 
 class WebViewPage extends StatefulWidget {
@@ -47,6 +47,19 @@ class WebViewPageState extends State<WebViewPage> {
     await _controller.loadRequest(Uri.parse(url));
   }
 
+  Widget buildLoadingAnimation({required bool isLoading}) {
+    return isLoading
+        ? Container(
+      color: const Color(0xFF050817),
+      child:  Center(
+        child: LoadingAnimationWidget.waveDots(
+          color: Colors.white,
+          size: 60,
+        ),
+      ),
+    )
+        : const SizedBox.shrink(); // Marking SizedBox as const
+  }
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -63,8 +76,7 @@ class WebViewPageState extends State<WebViewPage> {
           child: Stack(
             children: [
               WebViewWidget(controller: _controller),
-              if (isLoading)
-                const Center(child: CircularProgressIndicator()),
+              buildLoadingAnimation(isLoading: isLoading)
             ],
           ),
         ),

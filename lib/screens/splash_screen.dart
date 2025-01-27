@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:google_fonts/google_fonts.dart';
+//import 'package:google_fonts/google_fonts.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'webview_page.dart';
 
@@ -77,7 +77,8 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
           opacity: _opacity,
           child: Text(
             'Lenient Tree',
-            style: GoogleFonts.lexendDeca(
+            style: TextStyle(
+              fontFamily: 'LexendDeca',
               fontSize: 36,
               fontWeight: FontWeight.bold,
               color: Colors.white,
