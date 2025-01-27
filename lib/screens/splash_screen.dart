@@ -22,24 +22,21 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
     _initializeWebView();
 
     _controller = AnimationController(
-      duration: Duration(milliseconds: 1000), // 2 seconds for smoother acceleration
+      duration: Duration(milliseconds: 1000),
       vsync: this,
     );
 
-    // Non-instant fade-in start with delay
-    Future.delayed(Duration(milliseconds: 900), () {  // Delay before starting animation
+    Future.delayed(Duration(milliseconds: 900), () {
       _controller.forward();
     });
 
-    // Accelerating Fade-In Animation (Opacity)
     _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeIn, // Accelerating curve
+        curve: Curves.easeIn,
       ),
     );
 
-    // After the fade-in, stay at 100% opacity for 1 second, then navigate
     Timer(Duration(milliseconds: 2700), () {
       Navigator.pushReplacement(
         context,
@@ -48,7 +45,6 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
     });
   }
 
-  // Preload WebView content in the background
   Future<void> _initializeWebView() async {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -75,16 +71,16 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050817),  // Deep blackish background
+      backgroundColor: const Color(0xFF050817),
       body: Center(
         child: FadeTransition(
-          opacity: _opacity,  // Accelerating fade-in effect
+          opacity: _opacity,
           child: Text(
-            'Lenient Tree',  // Your splash screen text
+            'Lenient Tree',
             style: GoogleFonts.lexendDeca(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: Colors.white,  // White color
+              color: Colors.white,
               letterSpacing: 2.0,
             ),
           ),

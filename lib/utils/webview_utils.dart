@@ -1,6 +1,5 @@
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// Function to inject JavaScript for disabling zoom.
 Future<void> injectDisableZoom(WebViewController controller) async {
   await controller.runJavaScript(
       '''
