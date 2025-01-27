@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../utils/webview_utils.dart'; // Import the utils file
+import '../utils/webview_utils.dart';
 
 class WebViewPage extends StatefulWidget {
   const WebViewPage({super.key});
@@ -12,8 +12,6 @@ class WebViewPage extends StatefulWidget {
 class WebViewPageState extends State<WebViewPage> {
   late final WebViewController _controller;
   bool isLoading = true;
-
-  // Declare the URL inside this file
   final String url = 'https://www.lenienttree.com';
 
   @override
@@ -45,7 +43,6 @@ class WebViewPageState extends State<WebViewPage> {
         ),
       );
 
-    // Load the URL
     await _controller.loadRequest(Uri.parse(url));
   }
 

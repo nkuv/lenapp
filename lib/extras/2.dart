@@ -27,11 +27,9 @@ class WebViewPageState extends State<WebViewPage> {
 
   Future<void> _initializeWebView() async {
     try {
-      // Check network connectivity
       _hasNetwork = await _checkNetworkConnection();
       debugPrint("Network available: $_hasNetwork");
 
-      // Load content based on network availability
       await _loadContent();
     } catch (e) {
       debugPrint("Error initializing WebView: $e");
@@ -147,7 +145,7 @@ class WebViewPageState extends State<WebViewPage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _initializeWebView(); // Retry initialization
+              _initializeWebView();
             },
             child: const Text("Retry"),
           ),
