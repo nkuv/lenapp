@@ -31,12 +31,21 @@ class WebViewPageState extends State<WebViewPage> {
               isLoading = true;
             });
           },
-          onPageFinished: (String url) {
-            setState(() {
-              isLoading = false;
-            });
+          onPageFinished: (String url) async {
+            bool resourcesLoaded = await _controller.runJavaScriptReturningResult(
+                "document.readyState === 'complete'"
+            ) == 'true';
             injectDisableZoom(_controller);
-            _controller.setBackgroundColor(Colors.transparent);
+            if (resourcesLoaded) {
+              setState(() {
+                isLoading = false;
+              });
+            } else {
+              await Future.delayed(const Duration(milliseconds: 800));
+              setState(() {
+                isLoading = false;
+              });
+            }
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint("WebView Error: ${error.description}");
@@ -51,15 +60,16 @@ class WebViewPageState extends State<WebViewPage> {
     return isLoading
         ? Container(
       color: const Color(0xFF050817),
-      child:  Center(
+      child: Center(
         child: LoadingAnimationWidget.waveDots(
           color: Colors.white,
           size: 60,
         ),
       ),
     )
-        : const SizedBox.shrink(); // Marking SizedBox as const
+        : const SizedBox.shrink();
   }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -76,7 +86,7 @@ class WebViewPageState extends State<WebViewPage> {
           child: Stack(
             children: [
               WebViewWidget(controller: _controller),
-              buildLoadingAnimation(isLoading: isLoading)
+              buildLoadingAnimation(isLoading: isLoading),
             ],
           ),
         ),
