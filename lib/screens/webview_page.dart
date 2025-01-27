@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import '../utils/webview_utils.dart';
 
 class WebViewPage extends StatefulWidget {
@@ -48,14 +49,24 @@ class WebViewPageState extends State<WebViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            WebViewWidget(controller: _controller),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator()),
-          ],
+    return WillPopScope(
+      onWillPop: () async {
+        if (await _controller.canGoBack()) {
+          _controller.goBack();
+          return false;
+        } else {
+          return true;
+        }
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              WebViewWidget(controller: _controller),
+              if (isLoading)
+                const Center(child: CircularProgressIndicator()),
+            ],
+          ),
         ),
       ),
     );

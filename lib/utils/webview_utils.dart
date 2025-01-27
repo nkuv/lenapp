@@ -6,7 +6,11 @@ Future<void> injectDisableZoom(WebViewController controller) async {
     function disableZoom() {
       document.body.style.touchAction = "pan-x pan-y"; 
       document.body.style.userSelect = "none"; 
-      document.body.style.zoom = "90%"; 
+      document.body.style.zoom = "80%"; 
+      document.body.style.imageRendering = "auto";
+      document.body.style.imageRendering = "auto";  
+      document.body.style.webkitFilter = "none";
+      document.body.style.setProperty("image-rendering", "auto");    
     }
     disableZoom();
     '''
