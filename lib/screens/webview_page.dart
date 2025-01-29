@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 import '../utils/webview_utils.dart';
 
 class WebViewPage extends StatefulWidget {
@@ -11,49 +12,13 @@ class WebViewPage extends StatefulWidget {
 }
 
 class WebViewPageState extends State<WebViewPage> {
-  late final WebViewController _controller;
+  InAppWebViewController? _controller;
   bool isLoading = true;
   final String url = 'https://www.lenienttree.com';
 
   @override
   void initState() {
     super.initState();
-    _initializeWebView();
-  }
-
-  Future<void> _initializeWebView() async {
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (String url) {
-            setState(() {
-              isLoading = true;
-            });
-          },
-          onPageFinished: (String url) async {
-            bool resourcesLoaded = await _controller.runJavaScriptReturningResult(
-                "document.readyState === 'complete'"
-            ) == 'true';
-            injectDisableZoom(_controller);
-            if (resourcesLoaded) {
-              setState(() {
-                isLoading = false;
-              });
-            } else {
-              await Future.delayed(const Duration(milliseconds: 800));
-              setState(() {
-                isLoading = false;
-              });
-            }
-          },
-          onWebResourceError: (WebResourceError error) {
-            debugPrint("WebView Error: ${error.description}");
-          },
-        ),
-      );
-
-    await _controller.loadRequest(Uri.parse(url));
   }
 
   Widget buildLoadingAnimation({required bool isLoading}) {
@@ -74,18 +39,51 @@ class WebViewPageState extends State<WebViewPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        if (await _controller.canGoBack()) {
-          _controller.goBack();
+        if (_controller != null && await _controller!.canGoBack()) {
+          _controller!.goBack();
           return false;
-        } else {
-          return true;
         }
+        return true;
       },
       child: Scaffold(
         body: SafeArea(
           child: Stack(
             children: [
-              WebViewWidget(controller: _controller),
+              InAppWebView(
+                initialUrlRequest: URLRequest(url: WebUri(url)),
+                initialSettings: InAppWebViewSettings(
+                  javaScriptEnabled: true,
+                  mediaPlaybackRequiresUserGesture: false,
+                  allowsInlineMediaPlayback: true,
+                ),
+                onWebViewCreated: (controller) {
+                  _controller = controller;
+                },
+                onLoadStart: (InAppWebViewController controller, Uri? url) {
+                  setState(() {
+                    isLoading = true;
+                  });
+                },
+                onLoadStop: (InAppWebViewController controller, Uri? url) async {
+                  String readyState = await controller.evaluateJavascript(source: "document.readyState");
+
+                  injectDisableZoom(controller);
+
+                  if (readyState == 'complete') {
+                    setState(() {
+                      isLoading = false;
+                    });
+                  } else {
+                    await Future.delayed(const Duration(milliseconds: 800));
+                    setState(() {
+                      isLoading = false;
+                    });
+                  }
+                },
+                onReceivedError: (controller, request, error) {
+                  debugPrint("WebView Error: \${error.description}");
+                },
+              ),
               buildLoadingAnimation(isLoading: isLoading),
             ],
           ),

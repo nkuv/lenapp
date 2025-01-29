@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-//import 'package:google_fonts/google_fonts.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'webview_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -14,12 +12,10 @@ class SplashScreen extends StatefulWidget {
 class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
-  late WebViewController _webViewController;
 
   @override
   void initState() {
     super.initState();
-    _initializeWebView();
 
     _controller = AnimationController(
       duration: Duration(milliseconds: 1000),
@@ -43,23 +39,6 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
         MaterialPageRoute(builder: (context) => const WebViewPage()),
       );
     });
-  }
-
-  Future<void> _initializeWebView() async {
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
-          onWebResourceError: (WebResourceError error) {
-            print("Error preloading WebView: ${error.description}");
-          },
-        ),
-      );
-
-    await _webViewController.loadRequest(Uri.parse('https://www.lenienttree.com'));
-    print("WebView content preloaded.");
   }
 
   @override
