@@ -6,12 +6,13 @@ allprojects {
 }
 
 buildscript {
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3'  // Gradle plugin version
+        classpath 'com.android.tools.build:gradle:8.3.0'  // Gradle plugin version
         classpath 'com.google.gms:google-services:4.4.2'  // Google services plugin
     }
 }
