@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "241315872551",
+    "project_id": "lenienttree",
+    "storage_bucket": "lenienttree.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241315872551:android:8e3dac09f345ef625db302",
+        "android_client_info": {
+          "package_name": "com.lenienttree.lenapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8Iidw6wTRZtTi_FmUzvPvXkglGttGdug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

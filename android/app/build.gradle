@@ -2,6 +2,8 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
+    // Add the Google services Gradle plugin for Firebase
+    id 'com.google.gms.google-services'  // Add this line
 }
 
 android {
@@ -44,3 +46,18 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Import the Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:33.8.0')
+
+    // Add the Firebase products you want to use (e.g., Auth, Firestore, Analytics)
+    implementation 'com.google.firebase:firebase-auth'   // Firebase Authentication
+    implementation 'com.google.firebase:firebase-firestore'  // Firebase Firestore
+    implementation 'com.google.firebase:firebase-analytics'  // Firebase Analytics
+
+    // You can add other Firebase products as needed. No need to specify versions as BoM manages them.
+}
+
+// Apply the Google services plugin at the bottom
+apply plugin: 'com.google.gms.google-services'
