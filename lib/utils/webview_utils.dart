@@ -14,7 +14,15 @@ Future<void> injectDisableZoom(InAppWebViewController controller) async {
       document.body.style.imageRendering = "auto";
       document.body.style.webkitFilter = "none";
       document.body.style.setProperty("image-rendering", "auto");    
+
+      // Limit scroll speed by modifying the wheel event
+      window.addEventListener('wheel', function(event) {
+        event.preventDefault(); // Prevent default scrolling behavior
+        var scrollSpeed = 0.3; // Set the desired scroll speed
+        window.scrollBy(0, event.deltaY * scrollSpeed); // Adjust scroll speed
+      });
     }
     disableZoom();
   ''');
+
 }

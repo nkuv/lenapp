@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-
+import 'package:awesome_dialog/awesome_dialog.dart';
 import '../utils/webview_utils.dart';
 
 class WebViewPage extends StatefulWidget {
@@ -37,43 +37,26 @@ class WebViewPageState extends State<WebViewPage> {
   }
 
   void showOfflineDialog() {
-    showDialog(
+    AwesomeDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.blue.shade900,
-          title: Text(
-            'Internet Disconnected',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Text(
-            'Please check your internet connection.',
-            style: TextStyle(color: Colors.white),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                setState(() {
-                  isLoading = true;
-                });
-                Navigator.of(context).pop();
-                await Future.delayed(const Duration(seconds: 2));
-                _controller?.reload();
-                setState(() {
-                  isOffline = false;
-                  isLoading = true;
-                });
-              },
-              child: Text(
-                'Retry',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        );
+      dialogType: DialogType.noHeader,
+      customHeader: Image.asset('assets/images/offline.png', height: 80), // ⚠️ Warning style for network issues
+      animType: AnimType.scale, // Smooth animation
+      title: 'Internet Disconnected',
+      desc: 'Please check your internet connection.',
+      btnOkText: 'Retry',
+      btnOkOnPress: () async {
+        setState(() {
+          isLoading = true;
+        });
+        await Future.delayed(const Duration(milliseconds: 1500));
+        _controller?.reload();
+        setState(() {
+          isOffline = false;
+          isLoading = true;
+        });
       },
-    );
+    ).show();
   }
 
   void onReceivedError(InAppWebViewController controller, Uri? url, String errorDescription) async {
@@ -83,7 +66,7 @@ class WebViewPageState extends State<WebViewPage> {
       setState(() {
         isOffline = true;
       });
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(milliseconds: 1500));
       showOfflineDialog();
     }
   }
