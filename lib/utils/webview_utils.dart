@@ -15,14 +15,33 @@ Future<void> injectDisableZoom(InAppWebViewController controller) async {
       document.body.style.webkitFilter = "none";
       document.body.style.setProperty("image-rendering", "auto");    
 
-      // Limit scroll speed by modifying the wheel event
+      // Scroll speed limiter
+      let scrollSpeedFactor = 0.08; // Reduce this for slower scrolling
       window.addEventListener('wheel', function(event) {
-        event.preventDefault(); // Prevent default scrolling behavior
-        var scrollSpeed = 0.3; // Set the desired scroll speed
-        window.scrollBy(0, event.deltaY * scrollSpeed); // Adjust scroll speed
+        event.preventDefault();
+        window.scrollBy(0, event.deltaY * scrollSpeedFactor);
+      }, { passive: false });
+
+      // Disable scroll acceleration (momentum scrolling)
+      let isTouching = false;
+      window.addEventListener('touchstart', function() {
+        isTouching = true;
       });
+
+      window.addEventListener('touchmove', function(event) {
+        if (!isTouching) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', function() {
+        isTouching = false;
+      });
+
+      // Disable momentum scrolling on iOS
+      document.documentElement.style.overscrollBehavior = 'none';
+      document.body.style.overscrollBehavior = 'none';
     }
     disableZoom();
   ''');
-
 }

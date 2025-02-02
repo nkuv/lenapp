@@ -90,7 +90,9 @@ class WebViewPageState extends State<WebViewPage> {
                 child: InAppWebView(
                   initialUrlRequest: URLRequest(url: WebUri(url)),
                   initialSettings: InAppWebViewSettings(
+                    cacheEnabled: true,
                     javaScriptEnabled: true,
+                    domStorageEnabled: true,
                     mediaPlaybackRequiresUserGesture: false,
                     allowsInlineMediaPlayback: true,
                   ),
