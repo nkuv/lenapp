@@ -40,7 +40,7 @@ class WebViewPageState extends State<WebViewPage> {
     AwesomeDialog(
       context: context,
       dialogType: DialogType.noHeader,
-      customHeader: Image.asset('assets/images/offline.png', height: 80), // ⚠️ Warning style for network issues
+      customHeader: Image.asset('assets/images/offline.png', height: 80),
       animType: AnimType.scale, // Smooth animation
       title: 'Internet Disconnected',
       desc: 'Please check your internet connection.',
@@ -56,6 +56,7 @@ class WebViewPageState extends State<WebViewPage> {
           isLoading = true;
         });
       },
+      dismissOnTouchOutside: false,
     ).show();
   }
 
