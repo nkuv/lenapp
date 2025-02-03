@@ -1,172 +1,98 @@
-import 'dart:io';
-
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class WebViewPage extends StatefulWidget {
-  const WebViewPage({super.key});
-
+class SplashScreen extends StatefulWidget {
   @override
-  WebViewPageState createState() => WebViewPageState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class WebViewPageState extends State<WebViewPage> {
-  late WebViewController _controller;
-  bool isLoading = true;
-  bool _isControllerInitialized = false;
-  final String url = 'https://www.lenienttree.com';
-  bool _hasNetwork = false;
+class _SplashScreenState extends State<SplashScreen> {
+  String latestVersion = "Unknown";
+  String currentVersion = "Unknown";
 
   @override
   void initState() {
     super.initState();
-    _initializeWebView();
+    checkForUpdate();
   }
 
-  Future<void> _initializeWebView() async {
-    try {
-      _hasNetwork = await _checkNetworkConnection();
-      debugPrint("Network available: $_hasNetwork");
+  Future<void> checkForUpdate() async {
+    final remoteConfig = FirebaseRemoteConfig.instance;
 
-      await _loadContent();
+    try {
+      await remoteConfig.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: Duration(seconds: 10),
+        minimumFetchInterval: Duration.zero, // Force fetch every time
+      ));
+
+      await remoteConfig.fetchAndActivate();
+
+      latestVersion = remoteConfig.getString("latest_version");
+
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      currentVersion = packageInfo.version;
+
+      print("🔄 Latest version from Remote Config: $latestVersion");
+      print("📱 Current app version: $currentVersion");
+
+      if (_isUpdateAvailable(currentVersion, latestVersion)) {
+        showUpdateDialog(context,latestVersion);
+      }
     } catch (e) {
-      debugPrint("Error initializing WebView: $e");
-      _showNetworkError();
+      print("❌ Error fetching Remote Config: $e");
     }
   }
 
-  Future<bool> _checkNetworkConnection() async {
-    bool isConnected = await InternetConnectionChecker.createInstance().hasConnection;
-    if (isConnected) {
-      try {
-        final response = await http.get(Uri.parse('https://www.google.com')).timeout(
-          const Duration(seconds: 5),
-        );
-        return response.statusCode == 200;
-      } catch (e) {
-        debugPrint("Internet check failed: $e");
+
+  bool _isUpdateAvailable(String current, String latest) {
+    List<int> currentParts = current.split('.').map(int.parse).toList();
+    List<int> latestParts = latest.split('.').map(int.parse).toList();
+
+    for (int i = 0; i < latestParts.length; i++) {
+      if (i >= currentParts.length || latestParts[i] > currentParts[i]) {
+        return true;
+      } else if (latestParts[i] < currentParts[i]) {
         return false;
       }
     }
     return false;
   }
 
-  Future<void> _loadContent() async {
-    if (_hasNetwork) {
-      await _loadWebContent();
-    } else {
-      await _loadCachedContent();
-    }
-  }
+  void showUpdateDialog(BuildContext context,String latestVersion) {
+    void openPlayStore() async{
+      final String playStoreUrl = "https://play.google.com/store/apps/details?id=com.whatsapp";
 
-  Future<void> _loadWebContent() async {
-    try {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(Colors.transparent)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onPageStarted: (String url) {
-              setState(() {
-                isLoading = true;
-              });
-            },
-            onPageFinished: (String url) async {
-              setState(() {
-                isLoading = false;
-              });
-              await _cacheWebContent();
-            },
-            onWebResourceError: (WebResourceError error) {
-              debugPrint("WebView Error: ${error.description}");
-            },
-          ),
-        )
-        ..loadRequest(Uri.parse(url));
-
-      setState(() {
-        _isControllerInitialized = true;
-      });
-    } catch (e) {
-      debugPrint("Error loading web content: $e");
-      _showNetworkError();
-    }
-  }
-
-  Future<void> _cacheWebContent() async {
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/cached_page.html');
-        await file.writeAsString(response.body);
-        debugPrint("Page cached successfully.");
-      }
-    } catch (e) {
-      debugPrint("Error caching content: $e");
-    }
-  }
-
-  Future<void> _loadCachedContent() async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/cached_page.html');
-
-      if (await file.exists()) {
-        final cachedContent = await file.readAsString();
-        _controller = WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setBackgroundColor(Colors.transparent)
-          ..loadHtmlString(cachedContent);
-
-        setState(() {
-          _isControllerInitialized = true;
-          isLoading = false;
-        });
+      if (await canLaunch(playStoreUrl)) {
+        await launch(playStoreUrl);
       } else {
-        debugPrint("No cached content found.");
-        _showNetworkError();
+        print("❌ Could not launch Play Store ");
       }
-    } catch (e) {
-      debugPrint("Error loading cached content: $e");
-      _showNetworkError();
+      // Add logic to open Play Store link
     }
-  }
 
-  void _showNetworkError() {
-    showDialog(
+    AwesomeDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Network Error"),
-        content: const Text("No internet connection and no cached content available."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _initializeWebView();
-            },
-            child: const Text("Retry"),
-          ),
-        ],
-      ),
-    );
+      dialogType: DialogType.info, // Info icon for updates
+      animType: AnimType.scale, // Smooth scale animation
+      title: "Update Available",
+      desc: "A new version ($latestVersion) is available. Please update.",
+      btnCancelText: "Later",
+      btnCancelOnPress: () {}, // Simply dismisses the dialog
+      btnOkText: "Update Now",
+      btnOkOnPress: openPlayStore, // Opens Play Store link
+      btnOkColor: Colors.blue, // Highlight "Update Now" button
+      dismissOnTouchOutside: false, // Prevents accidental dismiss
+    ).show();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            if (_isControllerInitialized)
-              WebViewWidget(controller: _controller),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator()),
-          ],
-        ),
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }
