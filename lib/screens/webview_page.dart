@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/webview_utils.dart';
 
 class WebViewPage extends StatefulWidget {
@@ -15,12 +21,117 @@ class WebViewPageState extends State<WebViewPage> {
   InAppWebViewController? _controller;
   bool isLoading = true;
   bool isOffline = false;
+  bool isAccessible = true;
+  bool isVersionValid = true;
   final String url = 'https://www.lenienttree.com';
+  Timer? _configCheckTimer;
 
   @override
   void initState() {
     super.initState();
+    _startConfigChecker();
   }
+
+  @override
+  void dispose() {
+    _configCheckTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startConfigChecker() {
+    // Check immediately
+    _checkAppAccessibility();
+
+    // Then check every 5 minutes
+    _configCheckTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _checkAppAccessibility();
+    });
+  }
+
+  Future<void> _checkAppAccessibility() async {
+    try {
+      final remoteConfig = FirebaseRemoteConfig.instance;
+      await remoteConfig.fetchAndActivate();
+
+      var isAccessible = remoteConfig.getBool("accessable");
+      final latestVersion = remoteConfig.getString("latest_version");
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+
+      if (!mounted) return;
+
+      if (!isAccessible) {
+        setState(() => isAccessible = false);
+        _showAppBlockedDialog();
+        return;
+      }
+
+      if (_isUpdateAvailable(currentVersion, latestVersion)) {
+        setState(() => isVersionValid = false);
+        showUpdateDialog(context, latestVersion);
+        return;
+      }
+
+      setState(() {
+        isAccessible = true;
+        isVersionValid = true;
+      });
+    } catch (e) {
+      debugPrint("Config check error: $e");
+    }
+  }
+
+  bool _isUpdateAvailable(String current, String latest) {
+    List<int> currentParts = current.split('.').map(int.parse).toList();
+    List<int> latestParts = latest.split('.').map(int.parse).toList();
+
+    for (int i = 0; i < latestParts.length; i++) {
+      if (i >= currentParts.length || latestParts[i] > currentParts[i]) {
+        return true;
+      } else if (latestParts[i] < currentParts[i]) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  void _showAppBlockedDialog() {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.warning,
+      animType: AnimType.scale,
+      title: 'App Unavailable',
+      desc: 'This app is temporarily inaccessible. Please try again later.',
+      btnOkOnPress: () {
+        SystemNavigator.pop(); // Exit the app
+      },
+      dismissOnTouchOutside: false,
+      dismissOnBackKeyPress: false,
+    ).show();
+  }
+
+  void showUpdateDialog(BuildContext context, String latestVersion) {
+    void openPlayStore() async {
+      const String playStoreUrl = "https://play.google.com/store/apps/details?id=com.whatsapp";
+      if (await canLaunch(playStoreUrl)) {
+        await launch(playStoreUrl);
+      }
+    }
+
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.info,
+      animType: AnimType.scale,
+      title: "Update Available",
+      desc: "A new version ($latestVersion) is available. Please update.",
+      btnOkText: "Update Now",
+      btnOkOnPress: openPlayStore,
+      btnOkColor: Colors.blue,
+      dismissOnTouchOutside: false,
+      dismissOnBackKeyPress: false,
+    ).show();
+  }
+
 
   Widget buildLoadingAnimation() {
     return isLoading
@@ -41,14 +152,12 @@ class WebViewPageState extends State<WebViewPage> {
       context: context,
       dialogType: DialogType.noHeader,
       customHeader: Image.asset('assets/images/offline.png', height: 80),
-      animType: AnimType.scale, // Smooth animation
+      animType: AnimType.scale,
       title: 'Internet Disconnected',
       desc: 'Please check your internet connection.',
       btnOkText: 'Retry',
       btnOkOnPress: () async {
-        setState(() {
-          isLoading = true;
-        });
+        setState(() => isLoading = true);
         await Future.delayed(const Duration(milliseconds: 1500));
         _controller?.reload();
         setState(() {
@@ -64,9 +173,7 @@ class WebViewPageState extends State<WebViewPage> {
     debugPrint("WebView Error: $errorDescription");
 
     if (errorDescription.contains("net::ERR_INTERNET_DISCONNECTED")) {
-      setState(() {
-        isOffline = true;
-      });
+      setState(() => isOffline = true);
       await Future.delayed(const Duration(milliseconds: 1500));
       showOfflineDialog();
     }
@@ -86,9 +193,8 @@ class WebViewPageState extends State<WebViewPage> {
         body: SafeArea(
           child: Stack(
             children: [
-              Visibility(
-                visible: !isOffline,
-                child: InAppWebView(
+              if (isAccessible && isVersionValid && !isOffline)
+                InAppWebView(
                   initialUrlRequest: URLRequest(url: WebUri(url)),
                   initialSettings: InAppWebViewSettings(
                     cacheEnabled: true,
@@ -108,26 +214,41 @@ class WebViewPageState extends State<WebViewPage> {
                     });
                   },
                   onLoadStop: (controller, url) async {
-                    String readyState = await controller.evaluateJavascript(source: "document.readyState");
+                    String readyState = await controller.evaluateJavascript(
+                        source: "document.readyState");
 
                     injectDisableZoom(controller);
 
                     if (readyState == 'complete') {
-                      setState(() {
-                        isLoading = false;
-                      });
+                      setState(() => isLoading = false);
                     } else {
                       await Future.delayed(const Duration(milliseconds: 800));
-                      setState(() {
-                        isLoading = false;
-                      });
+                      setState(() => isLoading = false);
                     }
                   },
                   onReceivedError: (controller, request, error) {
                     onReceivedError(controller, request.url, error.description);
                   },
                 ),
-              ),
+              if (!isAccessible || !isVersionValid)
+                Container(
+                  color: const Color(0xFF050817),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 60, color: Colors.white),
+                        const SizedBox(height: 20),
+                        Text(
+                          !isAccessible
+                              ? 'App temporarily unavailable'
+                              : 'Update required',
+                          style: const TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               if (isOffline || isLoading) buildLoadingAnimation(),
             ],
           ),
