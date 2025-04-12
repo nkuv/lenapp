@@ -19,6 +19,7 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
 
   String latestVersion = "Unknown";
   String currentVersion = "Unknown";
+  bool accessable = true;
 
   @override
   void initState() {
@@ -47,6 +48,9 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
       if (latestVersion != currentVersion) {
         return; // Do not navigate if update is required
       }
+      if (!accessable){
+        return;
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const WebViewPage()),
@@ -66,12 +70,20 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
       await remoteConfig.fetchAndActivate();
 
       latestVersion = remoteConfig.getString("latest_version");
+      bool isAccessible = remoteConfig.getBool("accessable");
+      accessable = isAccessible;
 
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       currentVersion = packageInfo.version;
 
       print("🔄 Latest version from Remote Config: $latestVersion");
       print("📱 Current app version: $currentVersion");
+      print("✅ App accessible: $isAccessible");
+
+      if (!isAccessible) {
+        showAppBlockedDialog(context); // Prevent access if not accessible
+        return;
+      }
 
       if (_isUpdateAvailable(currentVersion, latestVersion)) {
         showUpdateDialog(context, latestVersion);
@@ -80,6 +92,7 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
       print("❌ Error fetching Remote Config: $e");
     }
   }
+
 
   bool _isUpdateAvailable(String current, String latest) {
     List<int> currentParts = current.split('.').map(int.parse).toList();
@@ -120,6 +133,22 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
       dismissOnTouchOutside: false, // Prevents accidental dismiss
     ).show();
   }
+
+  void showAppBlockedDialog(BuildContext context) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.warning,
+      animType: AnimType.scale,
+      title: 'App Unavailable',
+      desc: 'This app is temporarily inaccessible. Please try again later.',
+      btnOkOnPress: () {
+        // Optionally exit the app or disable navigation
+      },
+      dismissOnTouchOutside: false,
+      dismissOnBackKeyPress: false,
+    ).show();
+  }
+
 
   @override
   void dispose() {
